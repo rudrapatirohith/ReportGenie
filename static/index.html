@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ReportGenie — Automated Bi-Weekly Report Generator</title>
+  <meta name="description" content="Generate perfectly filled bi-weekly PDF reports in seconds. AI-powered or manual — your choice." />
+  <link rel="stylesheet" href="/styles.css" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📋</text></svg>" />
+</head>
+<body>
+
+<div class="toast-container" id="toast-container"></div>
+
+<div class="app-wrapper">
+
+  <!-- ═══ HERO ═══ -->
+  <header class="hero">
+    <div class="hero-badge">
+      <span></span>
+      ReportGenie v2.0
+    </div>
+    <h1>Report<span>Genie</span></h1>
+    <p class="hero-subtitle">
+      Paste your raw work notes, pick your dates, and generate a
+      perfectly filled bi-weekly PDF report in seconds.
+    </p>
+    <div class="provider-bar" id="provider-bar">
+      <div class="provider-chip" id="chip-gemini"><span class="dot"></span> Gemini</div>
+      <div class="provider-chip" id="chip-groq"><span class="dot"></span> Groq</div>
+      <div class="provider-chip" id="chip-openrouter"><span class="dot"></span> OpenRouter</div>
+      <div class="provider-chip active" id="chip-local"><span class="dot"></span> Local Engine</div>
+    </div>
+  </header>
+
+  <!-- ═══ TABS ═══ -->
+  <nav class="tab-nav" role="tablist">
+    <button class="tab-btn active" data-tab="smart" role="tab" aria-selected="true" id="tab-smart">
+      <span class="tab-icon">⚡</span> Smart Mode
+      <span class="tab-desc">Local AI — always works, free</span>
+    </button>
+    <button class="tab-btn" data-tab="ai" role="tab" aria-selected="false" id="tab-ai">
+      <span class="tab-icon">🤖</span> AI Mode
+      <span class="tab-desc">Gemini / Groq / OpenRouter</span>
+    </button>
+    <button class="tab-btn" data-tab="manual" role="tab" aria-selected="false" id="tab-manual">
+      <span class="tab-icon">✏️</span> Manual Mode
+      <span class="tab-desc">Fill every field yourself</span>
+    </button>
+  </nav>
+
+  <!-- ═══════════════════════════════════════════════════════════════════
+       TAB 1: SMART MODE
+       ═══════════════════════════════════════════════════════════════════ -->
+  <div class="tab-panel active" id="panel-smart" role="tabpanel">
+    <div class="form-grid">
+      <div class="form-column">
+        <p class="mode-desc">
+          Processes your notes <strong>locally</strong> with zero API calls.
+          No API key needed. Always free, always works.
+        </p>
+
+        <!-- Step 1: Profile -->
+        <div class="section-header">
+          <span class="section-num">1</span>
+          <span class="section-title">Profile</span>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label" for="s-employee">Employee Name</label>
+            <input class="form-input" id="s-employee" type="text" value="Rohith Rudrapati" />
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="s-project">Project Name</label>
+            <input class="form-input" id="s-project" type="text" value="Modelone" />
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="s-dept">Department</label>
+          <input class="form-input" id="s-dept" type="text" value="Technology" />
+        </div>
+
+        <!-- Step 2: Dates -->
+        <div class="section-header">
+          <span class="section-num">2</span>
+          <span class="section-title">Reporting Period</span>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label" for="s-from">From Date</label>
+            <input class="form-input" id="s-from" type="text" placeholder="MM/DD/YYYY" />
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="s-to">To Date</label>
+            <input class="form-input" id="s-to" type="text" placeholder="MM/DD/YYYY" />
+          </div>
+        </div>
+
+        <!-- Step 3: Notes -->
+        <div class="section-header">
+          <span class="section-num">3</span>
+          <span class="section-title">Work Notes</span>
+        </div>
+        <div class="form-group">
+          <textarea class="form-textarea" id="s-notes" placeholder="Paste your raw work notes here...&#10;&#10;e.g.&#10;- Fixed login bug in auth service&#10;- Reviewed PRs from teammates&#10;- Worked on API rate limiting&#10;- Sprint planning meeting&#10;- Started dashboard UI"></textarea>
+          <p class="form-hint">Messy bullet points are fine — they'll be cleaned up automatically.</p>
+        </div>
+
+        <!-- Step 4: Remarks -->
+        <div class="section-header">
+          <span class="section-num">4</span>
+          <span class="section-title">Remarks (optional)</span>
+        </div>
+        <div class="form-group">
+          <textarea class="form-textarea" id="s-remarks" rows="2" style="min-height:60px" placeholder="Any general comments..."></textarea>
+        </div>
+
+        <!-- Step 5: Signature -->
+        <div class="section-header">
+          <span class="section-num">5</span>
+          <span class="section-title">Signature (optional)</span>
+        </div>
+        <div class="file-upload" id="s-sig-upload">
+          <input type="file" accept=".png,.jpg,.jpeg" id="s-sig-file" />
+          <div class="file-upload-icon">✍️</div>
+          <div class="file-upload-text">Drop signature PNG here or click to browse</div>
+          <div class="file-upload-name" id="s-sig-name"></div>
+        </div>
+
+        <button class="btn-primary" id="s-generate" type="button">
+          <span class="btn-spinner"></span>
+          <span class="btn-text">⚡ Generate Report</span>
+        </button>
+      </div>
+
+      <!-- Output -->
+      <div class="output-panel">
+        <div class="output-card">
+          <div class="output-header">
+            <span class="output-title">Output</span>
+            <span class="output-model" id="s-model"></span>
+          </div>
+          <div class="output-body">
+            <div class="status status-idle" id="s-status">
+              <span class="status-icon">📋</span>
+              <span>Click Generate to create your report.</span>
+            </div>
+            <a class="download-btn hidden" id="s-download" href="#" download>
+              📥 Download Report PDF
+            </a>
+            <div class="json-preview" id="s-json">
+              <pre id="s-json-content"></pre>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════════════════
+       TAB 2: AI MODE
+       ═══════════════════════════════════════════════════════════════════ -->
+  <div class="tab-panel" id="panel-ai" role="tabpanel">
+    <div class="form-grid">
+      <div class="form-column">
+        <p class="mode-desc">
+          Uses <strong>AI providers</strong> (Gemini → Groq → OpenRouter) to intelligently
+          structure your notes. Falls back to Local Engine if all APIs fail.
+        </p>
+
+        <!-- API Keys -->
+        <div class="accordion open" id="accordion-keys">
+          <div class="accordion-header" onclick="toggleAccordion('accordion-keys')">
+            <span class="accordion-title">🔑 API Key Settings</span>
+            <span class="accordion-chevron">▼</span>
+          </div>
+          <div class="accordion-body">
+            <div class="accordion-content">
+              <div class="form-group">
+                <label class="form-label" for="a-gemini-key">Gemini API Key</label>
+                <input class="form-input" id="a-gemini-key" type="password" placeholder="AIza..." />
+                <p class="form-hint">Free at <a href="https://aistudio.google.com" target="_blank" style="color:var(--amber)">aistudio.google.com</a></p>
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="a-groq-key">Groq API Key</label>
+                <input class="form-input" id="a-groq-key" type="password" placeholder="gsk_..." />
+                <p class="form-hint">Free at <a href="https://console.groq.com" target="_blank" style="color:var(--amber)">console.groq.com</a> — no credit card</p>
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="a-openrouter-key">OpenRouter API Key</label>
+                <input class="form-input" id="a-openrouter-key" type="password" placeholder="sk-or-..." />
+                <p class="form-hint">Free at <a href="https://openrouter.ai" target="_blank" style="color:var(--amber)">openrouter.ai</a> — no credit card</p>
+              </div>
+              <div class="checkbox-group">
+                <input type="checkbox" id="a-save-keys" checked />
+                <label for="a-save-keys">Save keys to .env file</label>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Step 1: Profile -->
+        <div class="section-header">
+          <span class="section-num">1</span>
+          <span class="section-title">Profile</span>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label" for="a-employee">Employee Name</label>
+            <input class="form-input" id="a-employee" type="text" value="Rohith Rudrapati" />
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="a-project">Project Name</label>
+            <input class="form-input" id="a-project" type="text" value="Modelone" />
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="a-dept">Department</label>
+          <input class="form-input" id="a-dept" type="text" value="Technology" />
+        </div>
+
+        <!-- Step 2: Dates -->
+        <div class="section-header">
+          <span class="section-num">2</span>
+          <span class="section-title">Reporting Period</span>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label" for="a-from">From Date</label>
+            <input class="form-input" id="a-from" type="text" placeholder="MM/DD/YYYY" />
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="a-to">To Date</label>
+            <input class="form-input" id="a-to" type="text" placeholder="MM/DD/YYYY" />
+          </div>
+        </div>
+
+        <!-- Step 3: Notes -->
+        <div class="section-header">
+          <span class="section-num">3</span>
+          <span class="section-title">Work Notes</span>
+        </div>
+        <div class="form-group">
+          <textarea class="form-textarea" id="a-notes" placeholder="Paste your raw work notes here...&#10;&#10;AI will intelligently clean, structure, and derive upcoming tasks."></textarea>
+        </div>
+
+        <!-- Step 4: Remarks -->
+        <div class="section-header">
+          <span class="section-num">4</span>
+          <span class="section-title">Remarks (optional)</span>
+        </div>
+        <div class="form-group">
+          <textarea class="form-textarea" id="a-remarks" rows="2" style="min-height:60px" placeholder="Any general comments..."></textarea>
+        </div>
+
+        <!-- Step 5: Signature -->
+        <div class="section-header">
+          <span class="section-num">5</span>
+          <span class="section-title">Signature (optional)</span>
+        </div>
+        <div class="file-upload" id="a-sig-upload">
+          <input type="file" accept=".png,.jpg,.jpeg" id="a-sig-file" />
+          <div class="file-upload-icon">✍️</div>
+          <div class="file-upload-text">Drop signature PNG here or click to browse</div>
+          <div class="file-upload-name" id="a-sig-name"></div>
+        </div>
+
+        <button class="btn-primary" id="a-generate" type="button">
+          <span class="btn-spinner"></span>
+          <span class="btn-text">🤖 Generate with AI</span>
+        </button>
+      </div>
+
+      <!-- Output -->
+      <div class="output-panel">
+        <div class="output-card">
+          <div class="output-header">
+            <span class="output-title">Output</span>
+            <span class="output-model" id="a-model"></span>
+          </div>
+          <div class="output-body">
+            <div class="status status-idle" id="a-status">
+              <span class="status-icon">📋</span>
+              <span>Click Generate to create your report.</span>
+            </div>
+            <a class="download-btn hidden" id="a-download" href="#" download>
+              📥 Download Report PDF
+            </a>
+            <div class="json-preview" id="a-json">
+              <pre id="a-json-content"></pre>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════════════════
+       TAB 3: MANUAL MODE
+       ═══════════════════════════════════════════════════════════════════ -->
+  <div class="tab-panel" id="panel-manual" role="tabpanel">
+    <div class="form-grid">
+      <div class="form-column">
+        <p class="mode-desc">
+          Fill every field yourself. <strong>No AI, no API key needed.</strong>
+          Full control over every detail.
+        </p>
+
+        <!-- Step 1: Profile -->
+        <div class="section-header">
+          <span class="section-num">1</span>
+          <span class="section-title">Profile & Dates</span>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label" for="m-employee">Employee Name</label>
+            <input class="form-input" id="m-employee" type="text" value="Rohith Rudrapati" />
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="m-project">Project Name</label>
+            <input class="form-input" id="m-project" type="text" value="Modelone" />
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label" for="m-dept">Department</label>
+            <input class="form-input" id="m-dept" type="text" value="Technology" />
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label" for="m-from">From Date</label>
+            <input class="form-input" id="m-from" type="text" placeholder="MM/DD/YYYY" />
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="m-to">To Date</label>
+            <input class="form-input" id="m-to" type="text" placeholder="MM/DD/YYYY" />
+          </div>
+        </div>
+
+        <!-- Step 2: Tasks -->
+        <div class="section-header">
+          <span class="section-num">2</span>
+          <span class="section-title">Tasks Performed</span>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="m-task1">Task 1</label>
+          <input class="form-input" id="m-task1" type="text" placeholder="e.g. Implemented user authentication module" />
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="m-task2">Task 2</label>
+          <input class="form-input" id="m-task2" type="text" placeholder="e.g. Conducted code reviews for 5 PRs" />
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="m-task3">Task 3</label>
+          <input class="form-input" id="m-task3" type="text" placeholder="e.g. Fixed database connection timeout bug" />
+        </div>
+
+        <!-- Step 3: Remarks -->
+        <div class="form-group">
+          <label class="form-label" for="m-remarks">Remarks (optional)</label>
+          <textarea class="form-textarea" id="m-remarks" rows="2" style="min-height:60px" placeholder="Any general comments..."></textarea>
+        </div>
+
+        <!-- Step 4: Upcoming -->
+        <div class="section-header">
+          <span class="section-num">3</span>
+          <span class="section-title">Upcoming Tasks</span>
+        </div>
+        <div class="upcoming-group">
+          <div class="task-row">
+            <div class="form-group">
+              <label class="form-label" for="m-ut1">Upcoming Task 1</label>
+              <input class="form-input" id="m-ut1" type="text" placeholder="e.g. Deploy staging build" />
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="m-ud1">Date</label>
+              <input class="form-input" id="m-ud1" type="text" placeholder="MM/DD/YYYY" />
+            </div>
+          </div>
+          <div class="task-row">
+            <div class="form-group">
+              <label class="form-label" for="m-ut2">Upcoming Task 2</label>
+              <input class="form-input" id="m-ut2" type="text" placeholder="e.g. Write unit tests" />
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="m-ud2">Date</label>
+              <input class="form-input" id="m-ud2" type="text" placeholder="MM/DD/YYYY" />
+            </div>
+          </div>
+          <div class="task-row">
+            <div class="form-group">
+              <label class="form-label" for="m-ut3">Upcoming Task 3</label>
+              <input class="form-input" id="m-ut3" type="text" placeholder="e.g. Sprint retrospective" />
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="m-ud3">Date</label>
+              <input class="form-input" id="m-ud3" type="text" placeholder="MM/DD/YYYY" />
+            </div>
+          </div>
+        </div>
+
+        <!-- Step 5: Signature -->
+        <div class="section-header">
+          <span class="section-num">4</span>
+          <span class="section-title">Signature (optional)</span>
+        </div>
+        <div class="file-upload" id="m-sig-upload">
+          <input type="file" accept=".png,.jpg,.jpeg" id="m-sig-file" />
+          <div class="file-upload-icon">✍️</div>
+          <div class="file-upload-text">Drop signature PNG here or click to browse</div>
+          <div class="file-upload-name" id="m-sig-name"></div>
+        </div>
+
+        <button class="btn-primary" id="m-generate" type="button">
+          <span class="btn-spinner"></span>
+          <span class="btn-text">✏️ Generate Report</span>
+        </button>
+      </div>
+
+      <!-- Output -->
+      <div class="output-panel">
+        <div class="output-card">
+          <div class="output-header">
+            <span class="output-title">Output</span>
+            <span class="output-model" id="m-model"></span>
+          </div>
+          <div class="output-body">
+            <div class="status status-idle" id="m-status">
+              <span class="status-icon">📋</span>
+              <span>Click Generate to create your report.</span>
+            </div>
+            <a class="download-btn hidden" id="m-download" href="#" download>
+              📥 Download Report PDF
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ FOOTER ═══ -->
+  <footer class="footer">
+    ReportGenie v2.0 · byteWave Technology Solutions · 100% Free & Open Source
+  </footer>
+
+</div>
+
+<script src="/app.js"></script>
+</body>
+</html>

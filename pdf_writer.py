@@ -331,12 +331,21 @@ def fill_report(data: dict, signature_path: str = None) -> Path:
                  font_path=font_path, fontsize=10)
 
     # ── SAVE ─────────────────────────────────────────────────────────────
-    safe_from = data["from_date"].replace("/", "")
-    safe_to = data["to_date"].replace("/", "")
+    
+    def _format_date(d_str):
+        try:
+            return datetime.strptime(d_str, "%m/%d/%Y").strftime("%B_%d_%Y").lower()
+        except Exception:
+            return d_str.replace("/", "")
+            
+    safe_from = _format_date(data["from_date"])
+    safe_to = _format_date(data["to_date"])
+    
     out_path = OUTPUT_DIR / f"Report_{safe_from}_to_{safe_to}.pdf"
     doc.save(str(out_path), garbage=4, deflate=True)
     doc.close()
     return out_path
+
 
 
 # ── QUICK TEST ───────────────────────────────────────────────────────────────

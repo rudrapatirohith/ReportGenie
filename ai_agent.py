@@ -51,7 +51,7 @@ def _normalize_result(result: dict, from_date: str, to_date: str,
     
     upcoming = list(upcoming_tasks)[:3]
     while len(upcoming) < 3:
-        upcoming.append({"task": "-", "date": to_date})
+        upcoming.append({"task": "-", "date": ""})
     result["upcoming_tasks"] = upcoming
 
     result.update({

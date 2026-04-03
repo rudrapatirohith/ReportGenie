@@ -21,11 +21,19 @@ from dotenv import load_dotenv, set_key
 
 load_dotenv()
 
+import uuid
+import fitz
 from ai_agent import generate_report_content
 from pdf_writer import fill_report
 
 app = Flask(__name__, static_folder="static", static_url_path="")
 CORS(app)
+
+UPLOAD_FOLDER = Path("uploads")
+UPLOAD_FOLDER.mkdir(exist_ok=True)
+
+TEMP_PDF_DIR = Path("tmp_pdfs")
+TEMP_PDF_DIR.mkdir(exist_ok=True)
 
 
 # ── Static Frontend ─────────────────────────────────────────────────────────
@@ -60,7 +68,7 @@ def generate():
         "raw_notes": "...",
         "from_date": "MM/DD/YYYY",
         "to_date": "MM/DD/YYYY",
-        "department": "Technology",
+        "department": "Development ( Risk Tech)",
         "remarks": "...",
         "employee_name": "...",
         "project_name": "...",
@@ -77,10 +85,11 @@ def generate():
         raw_notes = (data.get("raw_notes") or "").strip()
         from_date = (data.get("from_date") or "").strip()
         to_date = (data.get("to_date") or "").strip()
-        department = (data.get("department") or "Technology").strip()
+        department = (data.get("department") or "Development ( Risk Tech)").strip()
         remarks = (data.get("remarks") or "").strip()
         employee_name = (data.get("employee_name") or "Rohith Rudrapati").strip()
         project_name = (data.get("project_name") or "Modelone").strip()
+        upcoming_tasks = data.get("upcoming_tasks")
         mode = (data.get("mode") or "ai").strip()
 
         # API keys (from request or env)
@@ -118,6 +127,7 @@ def generate():
             remarks=remarks,
             employee_name=employee_name,
             project_name=project_name,
+            upcoming_tasks=upcoming_tasks,
             gemini_key=gemini_key,
             groq_key=groq_key,
             openrouter_key=openrouter_key,
@@ -127,8 +137,7 @@ def generate():
         model_used = result.pop("_model_used", "unknown")
 
         # Handle signature if uploaded
-        sig_path = None
-        # (signatures handled via separate upload in frontend)
+        sig_path = data.get("signature_path")
 
         # Generate PDF
         pdf_path = fill_report(result, signature_path=sig_path)
@@ -159,7 +168,7 @@ def manual():
 
         from_date = (data.get("from_date") or "").strip()
         to_date = (data.get("to_date") or "").strip()
-        department = (data.get("department") or "Technology").strip()
+        department = (data.get("department") or "Development ( Risk Tech)").strip()
         remarks = (data.get("remarks") or "").strip()
         employee_name = (data.get("employee_name") or "Rohith Rudrapati").strip()
         project_name = (data.get("project_name") or "Modelone").strip()
@@ -198,7 +207,8 @@ def manual():
             "upcoming_tasks": upcoming,
         }
 
-        pdf_path = fill_report(report_data)
+        sig_path = data.get("signature_path")
+        pdf_path = fill_report(report_data, signature_path=sig_path)
 
         return jsonify({
             "success": True,
@@ -246,6 +256,124 @@ def upload_signature():
     f.save(str(save_path))
 
     return jsonify({"success": True, "path": str(save_path)})
+
+
+# ── Drag & Drop Signer Endpoints ──────────────────────────────────────────
+
+@app.route("/api/pdf/upload_raw", methods=["POST"])
+def upload_raw_pdf():
+    if "file" not in request.files:
+        return jsonify({"error": "No file part"}), 400
+    file = request.files["file"]
+    if file.filename == "":
+        return jsonify({"error": "No selected file"}), 400
+    if not file.filename.lower().endswith('.pdf'):
+        return jsonify({"error": "Must be a PDF file"}), 400
+
+    pdf_id = str(uuid.uuid4())
+    pdf_path = TEMP_PDF_DIR / f"{pdf_id}.pdf"
+    file.save(pdf_path)
+
+    try:
+        doc = fitz.open(pdf_path)
+        page_count = len(doc)
+        doc.close()
+        return jsonify({"success": True, "pdf_id": pdf_id, "pages": page_count})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@app.route("/api/pdf/render/<pdf_id>")
+def render_pdf_page(pdf_id):
+    page_num = int(request.args.get("page", 0))
+    pdf_path = TEMP_PDF_DIR / f"{pdf_id}.pdf"
+    img_path = TEMP_PDF_DIR / f"{pdf_id}_{page_num}.png"
+    
+    if not pdf_path.exists():
+        return jsonify({"error": "PDF not found"}), 404
+
+    if not img_path.exists():
+        try:
+            doc = fitz.open(pdf_path)
+            if page_num < 0 or page_num >= len(doc):
+                return jsonify({"error": "Invalid page number"}), 400
+            page = doc[page_num]
+            pix = page.get_pixmap(matrix=fitz.Matrix(2, 2)) # Render at 2x resolution
+            pix.save(str(img_path))
+            doc.close()
+        except Exception as e:
+            return jsonify({"error": str(e)}), 500
+
+    return send_file(img_path, mimetype="image/png")
+
+@app.route("/api/pdf/stamp_signature", methods=["POST"])
+def stamp_signature():
+    try:
+        data = request.get_json(force=True)
+        pdf_id = data.get("pdf_id")
+        page_num = int(data.get("page", 0))
+        sig_path_str = data.get("signature_path")
+        x = float(data.get("x", 0))
+        y = float(data.get("y", 0))
+        w = float(data.get("width", 100))
+        h = float(data.get("height", 50))
+
+        pdf_path = TEMP_PDF_DIR / f"{pdf_id}.pdf"
+        if not pdf_path.exists():
+            return jsonify({"error": "PDF not found"}), 404
+            
+        if not sig_path_str:
+            return jsonify({"error": "No signature provided"}), 400
+
+        sig_path = Path(sig_path_str)
+        if not sig_path.exists():
+            return jsonify({"error": "Signature file not found"}), 404
+
+        original_filename = data.get("original_filename", f"{pdf_id}.pdf")
+        
+        # Format the filename if it matches the MMDDYYYY_to_MMDDYYYY pattern
+        import re
+        from datetime import datetime
+        
+        def format_date_str(d_str):
+            try:
+                date_obj = datetime.strptime(d_str, "%m%d%Y")
+                return date_obj.strftime("%B_%d_%Y").lower()
+            except ValueError:
+                return d_str
+                
+        match = re.search(r'([0-9]{8})_to_([0-9]{8})', original_filename)
+        if match:
+            d1, d2 = match.groups()
+            new_date_range = f"{format_date_str(d1)}_to_{format_date_str(d2)}"
+            base_name = original_filename.replace(f"{d1}_to_{d2}", new_date_range)
+            out_filename = f"signed_{base_name}"
+        else:
+            out_filename = f"signed_{original_filename}"
+
+        out_path = UPLOAD_FOLDER / out_filename
+
+        doc = fitz.open(pdf_path)
+        if page_num < 0 or page_num >= len(doc):
+            return jsonify({"error": "Invalid page number"}), 400
+
+        page = doc[page_num]
+        rect = fitz.Rect(x, y, x + w, y + h)
+        page.insert_image(rect, filename=str(sig_path))
+        doc.save(out_path)
+        doc.close()
+
+        return jsonify({"success": True, "download_url": f"/api/download/{out_filename}", "filename": out_filename})
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return jsonify({"error": str(e)}), 500
+
+@app.route("/api/download/<filename>")
+def download_file(filename):
+    file_path = UPLOAD_FOLDER / filename
+    if not file_path.exists():
+        return jsonify({"error": "File not found"}), 404
+    return send_file(str(file_path.absolute()), as_attachment=True, download_name=filename)
 
 
 # ── Main ─────────────────────────────────────────────────────────────────────

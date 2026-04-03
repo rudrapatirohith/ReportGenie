@@ -39,14 +39,17 @@ def _parse_json(text: str) -> dict:
 def _normalize_result(result: dict, from_date: str, to_date: str,
                       department: str, remarks: str,
                       employee_name: str, project_name: str,
-                      model_used: str) -> dict:
+                      model_used: str, upcoming_tasks: list = None) -> dict:
     """Enforce exactly 3 tasks/upcoming and inject metadata."""
     performed = list(result.get("tasks_performed") or [])[:3]
     while len(performed) < 3:
         performed.append("-")
     result["tasks_performed"] = performed
 
-    upcoming = list(result.get("upcoming_tasks") or [])[:3]
+    if not upcoming_tasks:
+        upcoming_tasks = result.get("upcoming_tasks") or []
+    
+    upcoming = list(upcoming_tasks)[:3]
     while len(upcoming) < 3:
         upcoming.append({"task": "-", "date": to_date})
     result["upcoming_tasks"] = upcoming
@@ -71,15 +74,11 @@ SYSTEM_PROMPT = (
     "RULES:\n"
     "- Return ONLY a valid JSON object. No markdown fences, no explanation.\n"
     "- tasks_performed: exactly 3 concise professional strings (max 90 chars each).\n"
-    "- upcoming_tasks: exactly 3 objects with keys 'task' (max 90 chars) and 'date' (MM/DD/YYYY).\n"
-    "- Base upcoming dates roughly 1-2 weeks after the period end date.\n"
+    "- upcoming_tasks: omitted (user will provide these explicitly).\n"
     "- Do NOT invent technologies or features not mentioned in the notes.\n"
     "- If fewer than 3 tasks are mentioned, derive logically related follow-up work.\n\n"
     'Return ONLY this JSON schema:\n'
-    '{"tasks_performed": ["...", "...", "..."], '
-    '"upcoming_tasks": [{"task": "...", "date": "MM/DD/YYYY"}, '
-    '{"task": "...", "date": "MM/DD/YYYY"}, '
-    '{"task": "...", "date": "MM/DD/YYYY"}]}'
+    '{"tasks_performed": ["...", "...", "..."]}'
 )
 
 
@@ -268,35 +267,8 @@ def _smart_local(raw_notes: str, from_date: str, to_date: str) -> dict:
         else:
             performed.append("-")
 
-    # Generate upcoming dates
-    try:
-        base = datetime.strptime(to_date.strip(), "%m/%d/%Y")
-    except ValueError:
-        base = datetime.today()
-
-    # Generate upcoming tasks from remaining notes or derive from performed
-    remaining = unique_tasks[3:]
-    upcoming = []
-    for i, task in enumerate(remaining[:3]):
-        d = (base + timedelta(weeks=1, days=i * 2)).strftime("%m/%d/%Y")
-        upcoming.append({"task": task, "date": d})
-
-    # If not enough remaining, derive follow-ups
-    follow_up_prefixes = ["Continue work on", "Complete and test", "Review and finalize"]
-    while len(upcoming) < 3:
-        idx = len(upcoming)
-        base_task = performed[idx] if idx < len(performed) and performed[idx] != "-" else "project tasks"
-        # Create a derived follow-up
-        prefix = follow_up_prefixes[idx % len(follow_up_prefixes)]
-        derived = f"{prefix} {base_task.lower()}"
-        if len(derived) > 90:
-            derived = derived[:87] + "..."
-        d = (base + timedelta(weeks=1, days=idx * 3)).strftime("%m/%d/%Y")
-        upcoming.append({"task": derived, "date": d})
-
     return {
         "tasks_performed": performed,
-        "upcoming_tasks": upcoming,
     }, "Local Smart Engine"
 
 
@@ -306,10 +278,11 @@ def generate_report_content(
     raw_notes: str,
     from_date: str,
     to_date: str,
-    department: str = "Technology",
+    department: str = "Development ( Risk Tech)",
     remarks: str = "",
     employee_name: str = "Rohith Rudrapati",
     project_name: str = "Modelone",
+    upcoming_tasks: list = None,
     gemini_key: str = None,
     groq_key: str = None,
     openrouter_key: str = None,
@@ -332,10 +305,14 @@ def generate_report_content(
     user_msg = _build_user_msg(raw_notes, from_date, to_date, department)
     errors = []
 
+    def _call_norm(result, model):
+        return _normalize_result(result, from_date, to_date, department,
+                                 remarks, employee_name, project_name, model,
+                                 upcoming_tasks)
+
     if mode == "smart":
         result, model = _smart_local(raw_notes, from_date, to_date)
-        return _normalize_result(result, from_date, to_date, department,
-                                 remarks, employee_name, project_name, model)
+        return _call_norm(result, model)
 
     # AI mode: cascade through providers
     providers = []
@@ -349,8 +326,7 @@ def generate_report_content(
     for name, fn in providers:
         try:
             result, model = fn()
-            return _normalize_result(result, from_date, to_date, department,
-                                     remarks, employee_name, project_name, model)
+            return _call_norm(result, model)
         except Exception as e:
             errors.append(f"{name}: {e}")
             continue
@@ -359,5 +335,4 @@ def generate_report_content(
     result, model = _smart_local(raw_notes, from_date, to_date)
     if errors:
         model += " (API fallback)"
-    return _normalize_result(result, from_date, to_date, department,
-                             remarks, employee_name, project_name, model)
+    return _call_norm(result, model)

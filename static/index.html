@@ -47,6 +47,10 @@
       <span class="tab-icon">✏️</span> Manual Mode
       <span class="tab-desc">Fill every field yourself</span>
     </button>
+    <button class="tab-btn" data-tab="sign" role="tab" aria-selected="false" id="tab-sign">
+      <span class="tab-icon">✒️</span> Sign PDF
+      <span class="tab-desc">Standalone signer</span>
+    </button>
   </nav>
 
   <!-- ═══════════════════════════════════════════════════════════════════
@@ -77,7 +81,7 @@
         </div>
         <div class="form-group">
           <label class="form-label" for="s-dept">Department</label>
-          <input class="form-input" id="s-dept" type="text" value="Technology" />
+          <input class="form-input" id="s-dept" type="text" value="Development ( Risk Tech)" />
         </div>
 
         <!-- Step 2: Dates -->
@@ -88,11 +92,11 @@
         <div class="form-row">
           <div class="form-group">
             <label class="form-label" for="s-from">From Date</label>
-            <input class="form-input" id="s-from" type="text" placeholder="MM/DD/YYYY" />
+            <input class="form-input" id="s-from" type="date" />
           </div>
           <div class="form-group">
             <label class="form-label" for="s-to">To Date</label>
-            <input class="form-input" id="s-to" type="text" placeholder="MM/DD/YYYY" />
+            <input class="form-input" id="s-to" type="date" />
           </div>
         </div>
 
@@ -106,18 +110,56 @@
           <p class="form-hint">Messy bullet points are fine — they'll be cleaned up automatically.</p>
         </div>
 
-        <!-- Step 4: Remarks -->
+        <!-- Step 4: Upcoming -->
         <div class="section-header">
           <span class="section-num">4</span>
+          <span class="section-title">Upcoming Tasks</span>
+        </div>
+        <div class="upcoming-group">
+          <div class="task-row">
+            <div class="form-group">
+              <label class="form-label" for="s-ut1">Upcoming Task 1</label>
+              <input class="form-input" id="s-ut1" type="text" placeholder="What's next?" />
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="s-ud1">Date</label>
+              <input class="form-input" id="s-ud1" type="date" />
+            </div>
+          </div>
+          <div class="task-row">
+            <div class="form-group">
+              <label class="form-label" for="s-ut2">Upcoming Task 2</label>
+              <input class="form-input" id="s-ut2" type="text" placeholder="What's next?" />
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="s-ud2">Date</label>
+              <input class="form-input" id="s-ud2" type="date" />
+            </div>
+          </div>
+          <div class="task-row">
+            <div class="form-group">
+              <label class="form-label" for="s-ut3">Upcoming Task 3</label>
+              <input class="form-input" id="s-ut3" type="text" placeholder="What's next?" />
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="s-ud3">Date</label>
+              <input class="form-input" id="s-ud3" type="date" />
+            </div>
+          </div>
+        </div>
+
+        <!-- Step 5: Remarks -->
+        <div class="section-header">
+          <span class="section-num">5</span>
           <span class="section-title">Remarks (optional)</span>
         </div>
         <div class="form-group">
           <textarea class="form-textarea" id="s-remarks" rows="2" style="min-height:60px" placeholder="Any general comments..."></textarea>
         </div>
 
-        <!-- Step 5: Signature -->
+        <!-- Step 6: Signature -->
         <div class="section-header">
-          <span class="section-num">5</span>
+          <span class="section-num">6</span>
           <span class="section-title">Signature (optional)</span>
         </div>
         <div class="file-upload" id="s-sig-upload">
@@ -216,7 +258,7 @@
         </div>
         <div class="form-group">
           <label class="form-label" for="a-dept">Department</label>
-          <input class="form-input" id="a-dept" type="text" value="Technology" />
+          <input class="form-input" id="a-dept" type="text" value="Development ( Risk Tech)" />
         </div>
 
         <!-- Step 2: Dates -->
@@ -227,11 +269,11 @@
         <div class="form-row">
           <div class="form-group">
             <label class="form-label" for="a-from">From Date</label>
-            <input class="form-input" id="a-from" type="text" placeholder="MM/DD/YYYY" />
+            <input class="form-input" id="a-from" type="date" />
           </div>
           <div class="form-group">
             <label class="form-label" for="a-to">To Date</label>
-            <input class="form-input" id="a-to" type="text" placeholder="MM/DD/YYYY" />
+            <input class="form-input" id="a-to" type="date" />
           </div>
         </div>
 
@@ -244,18 +286,56 @@
           <textarea class="form-textarea" id="a-notes" placeholder="Paste your raw work notes here...&#10;&#10;AI will intelligently clean, structure, and derive upcoming tasks."></textarea>
         </div>
 
-        <!-- Step 4: Remarks -->
+        <!-- Step 4: Upcoming -->
         <div class="section-header">
           <span class="section-num">4</span>
+          <span class="section-title">Upcoming Tasks</span>
+        </div>
+        <div class="upcoming-group">
+          <div class="task-row">
+            <div class="form-group">
+              <label class="form-label" for="a-ut1">Upcoming Task 1</label>
+              <input class="form-input" id="a-ut1" type="text" placeholder="What's next?" />
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="a-ud1">Date</label>
+              <input class="form-input" id="a-ud1" type="date" />
+            </div>
+          </div>
+          <div class="task-row">
+            <div class="form-group">
+              <label class="form-label" for="a-ut2">Upcoming Task 2</label>
+              <input class="form-input" id="a-ut2" type="text" placeholder="What's next?" />
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="a-ud2">Date</label>
+              <input class="form-input" id="a-ud2" type="date" />
+            </div>
+          </div>
+          <div class="task-row">
+            <div class="form-group">
+              <label class="form-label" for="a-ut3">Upcoming Task 3</label>
+              <input class="form-input" id="a-ut3" type="text" placeholder="What's next?" />
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="a-ud3">Date</label>
+              <input class="form-input" id="a-ud3" type="date" />
+            </div>
+          </div>
+        </div>
+
+        <!-- Step 5: Remarks -->
+        <div class="section-header">
+          <span class="section-num">5</span>
           <span class="section-title">Remarks (optional)</span>
         </div>
         <div class="form-group">
           <textarea class="form-textarea" id="a-remarks" rows="2" style="min-height:60px" placeholder="Any general comments..."></textarea>
         </div>
 
-        <!-- Step 5: Signature -->
+        <!-- Step 6: Signature -->
         <div class="section-header">
-          <span class="section-num">5</span>
+          <span class="section-num">6</span>
           <span class="section-title">Signature (optional)</span>
         </div>
         <div class="file-upload" id="a-sig-upload">
@@ -324,17 +404,17 @@
         <div class="form-row">
           <div class="form-group">
             <label class="form-label" for="m-dept">Department</label>
-            <input class="form-input" id="m-dept" type="text" value="Technology" />
+            <input class="form-input" id="m-dept" type="text" value="Development ( Risk Tech)" />
           </div>
         </div>
         <div class="form-row">
           <div class="form-group">
             <label class="form-label" for="m-from">From Date</label>
-            <input class="form-input" id="m-from" type="text" placeholder="MM/DD/YYYY" />
+            <input class="form-input" id="m-from" type="date" />
           </div>
           <div class="form-group">
             <label class="form-label" for="m-to">To Date</label>
-            <input class="form-input" id="m-to" type="text" placeholder="MM/DD/YYYY" />
+            <input class="form-input" id="m-to" type="date" />
           </div>
         </div>
 
@@ -375,7 +455,7 @@
             </div>
             <div class="form-group">
               <label class="form-label" for="m-ud1">Date</label>
-              <input class="form-input" id="m-ud1" type="text" placeholder="MM/DD/YYYY" />
+              <input class="form-input" id="m-ud1" type="date" />
             </div>
           </div>
           <div class="task-row">
@@ -385,7 +465,7 @@
             </div>
             <div class="form-group">
               <label class="form-label" for="m-ud2">Date</label>
-              <input class="form-input" id="m-ud2" type="text" placeholder="MM/DD/YYYY" />
+              <input class="form-input" id="m-ud2" type="date" />
             </div>
           </div>
           <div class="task-row">
@@ -395,7 +475,7 @@
             </div>
             <div class="form-group">
               <label class="form-label" for="m-ud3">Date</label>
-              <input class="form-input" id="m-ud3" type="text" placeholder="MM/DD/YYYY" />
+              <input class="form-input" id="m-ud3" type="date" />
             </div>
           </div>
         </div>
@@ -439,6 +519,62 @@
     </div>
   </div>
 
+  <!-- ═══════════════════════════════════════════════════════════════════
+       TAB 4: SIGN PDF
+       ═══════════════════════════════════════════════════════════════════ -->
+  <div class="tab-panel" id="panel-sign" role="tabpanel">
+    <div class="card" style="display: flex; flex-direction: column; height: 75vh; padding: 0.5rem; gap: 0.5rem; margin-top: 1rem;">
+      <div style="display: flex; gap: 1rem; width: 100%; height: 100%;">
+        
+        <!-- Workspace Area -->
+        <div style="flex: 1; background-color: #1a1b1e; border-radius: var(--radius); overflow: auto; display: flex; justify-content: center; padding: 1rem; position: relative;" id="scroll-wrapper">
+          <div class="empty-state" id="empty-state" style="position: absolute; top:0; left:0; right:0; bottom:0; display:flex; align-items:center; justify-content:center; color: var(--text-secondary);">
+            <span>Upload a PDF to get started</span>
+          </div>
+          <div class="pdf-container" id="pdf-container" style="display: none; position: relative; background-color: white; box-shadow: 0 10px 30px rgba(0,0,0,0.5);">
+            <img id="pdf-img" style="display: block; width: 100%; height: auto; pointer-events: none;" src="" alt="PDF Page">
+            <div id="signature-element" style="display: none; position: absolute; top: 50px; left: 50px; cursor: grab; border: 2px dashed rgba(66, 153, 225, 0.5); background-color: rgba(66, 153, 225, 0.1); width: 150px; z-index: 100; user-select: none;">
+              <img id="sig-img" style="width: 100%; height: 100%; object-fit: contain; pointer-events: none;" src="" alt="Signature">
+              <div id="resize-handle" style="width: 12px; height: 12px; background-color: var(--primary); position: absolute; right: -6px; bottom: -6px; cursor: nwse-resize; border-radius: 50%;"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Side Config Area -->
+        <div style="width: 320px; background-color: var(--bg-color); border: 1px solid var(--border); border-radius: var(--radius); padding: 1rem; display: flex; flex-direction: column; gap: 1rem;">
+          
+          <div class="form-group">
+            <label class="form-label">1. Document</label>
+            <div class="file-upload" id="pdf-upload-wrap" style="min-height: 80px; padding: 0.5rem; text-align: center;">
+              <input type="file" accept=".pdf" id="pdf-file" />
+              <div class="file-upload-icon" style="font-size: 1.2rem;">📄</div>
+              <div class="file-upload-text" style="font-size: 0.75rem;">Drop PDF here</div>
+              <div class="file-upload-name" id="pdf-name"></div>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">2. Signature</label>
+            <div class="file-upload" id="sig-upload-wrap" style="min-height: 80px; padding: 0.5rem; text-align: center;">
+              <input type="file" accept=".png,.jpg,.jpeg" id="sig-file" />
+              <div class="file-upload-icon" style="font-size: 1.2rem;">✍️</div>
+              <div class="file-upload-text" style="font-size: 0.75rem;">Drop Signature PNG</div>
+              <div class="file-upload-name" id="sig-name"></div>
+            </div>
+          </div>
+
+          <div id="status-message" class="status" style="display: none;"></div>
+          
+          <div style="margin-top: auto; display: flex; flex-direction: column; gap: 0.5rem;">
+            <button class="btn btn-primary" id="btn-stamp" disabled>Apply Signature</button>
+            <a id="download-link" class="btn btn-outline" style="text-align: center; display: none;" target="_blank">Download Signed PDF</a>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- ═══ FOOTER ═══ -->
   <footer class="footer">
     ReportGenie v2.0 · byteWave Technology Solutions · 100% Free & Open Source
@@ -447,5 +583,6 @@
 </div>
 
 <script src="/app.js"></script>
+<script src="/sign.js"></script>
 </body>
 </html>

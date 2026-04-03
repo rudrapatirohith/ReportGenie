@@ -24,6 +24,13 @@ function defaultDates() {
   return { from: formatDate(from), to: formatDate(today) };
 }
 
+function toUSDate(isoStr) {
+  if (!isoStr) return "";
+  const parts = isoStr.split('-');
+  if (parts.length !== 3) return isoStr;
+  return `${parts[1]}/${parts[2]}/${parts[0]}`;
+}
+
 function upcomingDate(toStr, weeksAhead) {
   let base;
   try {
@@ -168,19 +175,39 @@ async function generateSmart() {
   setJsonPreview(prefix, null);
   setModel(prefix, '');
 
+  let sigPath = null;
+  const fileInput = $(`#s-sig-file`);
+  if (fileInput && fileInput.files.length > 0) {
+    const formData = new FormData();
+    formData.append("file", fileInput.files[0]);
+    try {
+      const res = await fetch("/api/upload-signature", { method: "POST", body: formData });
+      const data = await res.json();
+      if (data.success) sigPath = data.path;
+    } catch (e) {
+      console.warn("Signature upload failed", e);
+    }
+  }
+
   try {
     const resp = await fetch('/api/generate', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         raw_notes: notes,
-        from_date: fromDate,
-        to_date: toDate,
-        department: $('#s-dept').value.trim() || 'Technology',
+        from_date: toUSDate(fromDate),
+        to_date: toUSDate(toDate),
+        department: $('#s-dept').value.trim() || 'Development ( Risk Tech)',
         remarks: $('#s-remarks').value.trim(),
         employee_name: $('#s-employee').value.trim() || 'Rohith Rudrapati',
         project_name: $('#s-project').value.trim() || 'Modelone',
+        upcoming_tasks: [
+          { task: $('#s-ut1').value.trim() || '-', date: toUSDate($('#s-ud1').value.trim() || upcomingDate(toDate, 1)) },
+          { task: $('#s-ut2').value.trim() || '-', date: toUSDate($('#s-ud2').value.trim() || upcomingDate(toDate, 1)) },
+          { task: $('#s-ut3').value.trim() || '-', date: toUSDate($('#s-ud3').value.trim() || upcomingDate(toDate, 2)) },
+        ],
         mode: 'smart',
+        signature_path: sigPath,
       }),
     });
 
@@ -230,23 +257,43 @@ async function generateAI() {
   setJsonPreview(prefix, null);
   setModel(prefix, '');
 
+  let sigPath = null;
+  const fileInput = $(`#a-sig-file`);
+  if (fileInput && fileInput.files.length > 0) {
+    const formData = new FormData();
+    formData.append("file", fileInput.files[0]);
+    try {
+      const res = await fetch("/api/upload-signature", { method: "POST", body: formData });
+      const data = await res.json();
+      if (data.success) sigPath = data.path;
+    } catch (e) {
+      console.warn("Signature upload failed", e);
+    }
+  }
+
   try {
     const resp = await fetch('/api/generate', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         raw_notes: notes,
-        from_date: fromDate,
-        to_date: toDate,
-        department: $('#a-dept').value.trim() || 'Technology',
+        from_date: toUSDate(fromDate),
+        to_date: toUSDate(toDate),
+        department: $('#a-dept').value.trim() || 'Development ( Risk Tech)',
         remarks: $('#a-remarks').value.trim(),
         employee_name: $('#a-employee').value.trim() || 'Rohith Rudrapati',
         project_name: $('#a-project').value.trim() || 'Modelone',
+        upcoming_tasks: [
+          { task: $('#a-ut1').value.trim() || '-', date: toUSDate($('#a-ud1').value.trim() || upcomingDate(toDate, 1)) },
+          { task: $('#a-ut2').value.trim() || '-', date: toUSDate($('#a-ud2').value.trim() || upcomingDate(toDate, 1)) },
+          { task: $('#a-ut3').value.trim() || '-', date: toUSDate($('#a-ud3').value.trim() || upcomingDate(toDate, 2)) },
+        ],
         mode: 'ai',
         gemini_key: geminiKey,
         groq_key: groqKey,
         openrouter_key: openrouterKey,
         save_keys: $('#a-save-keys').checked,
+        signature_path: sigPath,
       }),
     });
 
@@ -288,23 +335,38 @@ async function generateManual() {
   setDownload(prefix, null);
   setModel(prefix, '');
 
+  let sigPath = null;
+  const fileInput = $(`#m-sig-file`);
+  if (fileInput && fileInput.files.length > 0) {
+    const formData = new FormData();
+    formData.append("file", fileInput.files[0]);
+    try {
+      const res = await fetch("/api/upload-signature", { method: "POST", body: formData });
+      const data = await res.json();
+      if (data.success) sigPath = data.path;
+    } catch (e) {
+      console.warn("Signature upload failed", e);
+    }
+  }
+
   try {
     const resp = await fetch('/api/manual', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        from_date: fromDate,
-        to_date: toDate,
-        department: $('#m-dept').value.trim() || 'Technology',
+        from_date: toUSDate(fromDate),
+        to_date: toUSDate(toDate),
+        department: $('#m-dept').value.trim() || 'Development ( Risk Tech)',
         remarks: $('#m-remarks').value.trim(),
         employee_name: $('#m-employee').value.trim() || 'Rohith Rudrapati',
         project_name: $('#m-project').value.trim() || 'Modelone',
         tasks_performed: [t1 || '-', t2 || '-', t3 || '-'],
         upcoming_tasks: [
-          { task: $('#m-ut1').value.trim() || '-', date: $('#m-ud1').value.trim() || upcomingDate(toDate, 1) },
-          { task: $('#m-ut2').value.trim() || '-', date: $('#m-ud2').value.trim() || upcomingDate(toDate, 1) },
-          { task: $('#m-ut3').value.trim() || '-', date: $('#m-ud3').value.trim() || upcomingDate(toDate, 2) },
+          { task: $('#m-ut1').value.trim() || '-', date: toUSDate($('#m-ud1').value.trim() || upcomingDate(toDate, 1)) },
+          { task: $('#m-ut2').value.trim() || '-', date: toUSDate($('#m-ud2').value.trim() || upcomingDate(toDate, 1)) },
+          { task: $('#m-ut3').value.trim() || '-', date: toUSDate($('#m-ud3').value.trim() || upcomingDate(toDate, 2)) },
         ],
+        signature_path: sigPath,
       }),
     });
 
@@ -367,10 +429,15 @@ document.addEventListener('DOMContentLoaded', () => {
     if (el) el.value = dates.to;
   });
 
-  // Set upcoming dates for manual mode
-  $('#m-ud1').value = upcomingDate(dates.to, 1);
-  $('#m-ud2').value = upcomingDate(dates.to, 1);
-  $('#m-ud3').value = upcomingDate(dates.to, 2);
+  // Set upcoming dates for manual and smart mode defaults
+  ['s', 'a', 'm'].forEach(prefix => {
+    const el1 = $(`#${prefix}-ud1`);
+    if(el1) el1.value = upcomingDate(dates.to, 1);
+    const el2 = $(`#${prefix}-ud2`);
+    if(el2) el2.value = upcomingDate(dates.to, 1);
+    const el3 = $(`#${prefix}-ud3`);
+    if(el3) el3.value = upcomingDate(dates.to, 2);
+  });
 
   // Init components
   initTabs();

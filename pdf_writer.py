@@ -186,9 +186,9 @@ UPCOMING_ROWS = [
     },
 ]
 
-# Signature date — baseline must match "Employee Signature & Date" text (~641)
-SIGNATURE_DATE_RECT = (296, 630, 489, 650)
-SIGNATURE_DATE_POS = (316, 641)
+# Signature date — baseline must sit on the line (y=636) and side-by-side with signature image
+SIGNATURE_DATE_RECT = (296, 620, 489, 650)
+SIGNATURE_DATE_POS = (360, 636)
 
 
 # ── PUBLIC API ──────────────────────────────────────────────────────────────
@@ -264,7 +264,7 @@ def fill_report(data: dict, signature_path: str = None) -> Path:
     # ── STEP 3: Insert new text (looks naturally typed into the form) ────
 
     # Header values — positioned within the cell, vertically centered
-    _insert_text(page, 195, 149, data.get("department", "Technology"),
+    _insert_text(page, 195, 149, data.get("department", "Development ( Risk Tech)"),
                  font_path=font_path, fontsize=10)
 
     if emp_name:
@@ -319,7 +319,9 @@ def fill_report(data: dict, signature_path: str = None) -> Path:
 
     # ── SIGNATURE ────────────────────────────────────────────────────────
     if signature_path and Path(signature_path).exists():
-        sig_rect = fitz.Rect(74, 608, 270, 654)
+        # Correctly bound to just the left half of the __________ line
+        # so it doesn't overlap the text to the left or the date to the right.
+        sig_rect = fitz.Rect(230, 600, 310, 640)
         page.insert_image(sig_rect, filename=str(signature_path),
                           keep_proportion=True)
 
@@ -340,7 +342,7 @@ def fill_report(data: dict, signature_path: str = None) -> Path:
 # ── QUICK TEST ───────────────────────────────────────────────────────────────
 if __name__ == "__main__":
     dummy = {
-        "department": "Technology",
+        "department": "Development ( Risk Tech)",
         "from_date": "03/19/2026",
         "to_date": "04/01/2026",
         "employee_name": "Rohith Rudrapati",
